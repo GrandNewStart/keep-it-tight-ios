@@ -7,13 +7,13 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		CB26D1322E07B62D00F20B16 /* ledger-ios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ledger-ios.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		CB26D1322E07B62D00F20B16 /* ledger.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ledger.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		CB26D1342E07B62D00F20B16 /* ledger-ios */ = {
+		CB26D1342E07B62D00F20B16 /* ledger */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "ledger-ios";
+			path = ledger;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -32,7 +32,7 @@
 		CB26D1292E07B62C00F20B16 = {
 			isa = PBXGroup;
 			children = (
-				CB26D1342E07B62D00F20B16 /* ledger-ios */,
+				CB26D1342E07B62D00F20B16 /* ledger */,
 				CB26D1332E07B62D00F20B16 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -40,7 +40,7 @@
 		CB26D1332E07B62D00F20B16 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				CB26D1322E07B62D00F20B16 /* ledger-ios.app */,
+				CB26D1322E07B62D00F20B16 /* ledger.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,9 +48,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		CB26D1312E07B62D00F20B16 /* ledger-ios */ = {
+		CB26D1312E07B62D00F20B16 /* ledger */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = CB26D13F2E07B62E00F20B16 /* Build configuration list for PBXNativeTarget "ledger-ios" */;
+			buildConfigurationList = CB26D13F2E07B62E00F20B16 /* Build configuration list for PBXNativeTarget "ledger" */;
 			buildPhases = (
 				CB26D12E2E07B62D00F20B16 /* Sources */,
 				CB26D12F2E07B62D00F20B16 /* Frameworks */,
@@ -61,13 +61,13 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				CB26D1342E07B62D00F20B16 /* ledger-ios */,
+				CB26D1342E07B62D00F20B16 /* ledger */,
 			);
-			name = "ledger-ios";
+			name = ledger;
 			packageProductDependencies = (
 			);
 			productName = "ledger-ios";
-			productReference = CB26D1322E07B62D00F20B16 /* ledger-ios.app */;
+			productReference = CB26D1322E07B62D00F20B16 /* ledger.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -85,7 +85,7 @@
 					};
 				};
 			};
-			buildConfigurationList = CB26D12D2E07B62C00F20B16 /* Build configuration list for PBXProject "ledger-ios" */;
+			buildConfigurationList = CB26D12D2E07B62C00F20B16 /* Build configuration list for PBXProject "ledger" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -99,7 +99,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				CB26D1312E07B62D00F20B16 /* ledger-ios */,
+				CB26D1312E07B62D00F20B16 /* ledger */,
 			);
 		};
 /* End PBXProject section */
@@ -256,18 +256,23 @@
 				DEVELOPMENT_TEAM = Q82L72UCXN;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "정신차려";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "dev.bluelemonade.ledger-ios";
+				PRODUCT_BUNDLE_IDENTIFIER = dev.bluelemonade.ledger;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -284,18 +289,23 @@
 				DEVELOPMENT_TEAM = Q82L72UCXN;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "정신차려";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "dev.bluelemonade.ledger-ios";
+				PRODUCT_BUNDLE_IDENTIFIER = dev.bluelemonade.ledger;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -305,7 +315,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		CB26D12D2E07B62C00F20B16 /* Build configuration list for PBXProject "ledger-ios" */ = {
+		CB26D12D2E07B62C00F20B16 /* Build configuration list for PBXProject "ledger" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CB26D13D2E07B62E00F20B16 /* Debug */,
@@ -314,7 +324,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		CB26D13F2E07B62E00F20B16 /* Build configuration list for PBXNativeTarget "ledger-ios" */ = {
+		CB26D13F2E07B62E00F20B16 /* Build configuration list for PBXNativeTarget "ledger" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CB26D1402E07B62E00F20B16 /* Debug */,

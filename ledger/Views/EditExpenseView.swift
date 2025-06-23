@@ -9,13 +9,20 @@ import SwiftUI
 import SwiftData
 
 struct EditExpenseView: View {
+    @AppStorage("appAppearance") private var appearanceSetting: String = AppAppearance.light.rawValue
+
+    var appearance: AppAppearance {
+        AppAppearance(rawValue: appearanceSetting) ?? .light
+    }
+    
     @Bindable var expense: Expense
 
     @State private var editingCost: Int
     @State private var editingName: String
-    @State private var editingTag: String?
-    @State private var editingDate: Date
+    @State private var editingTag: String
+    @State private var editingDate: String
     @State private var showDatePicker = false
+    @FocusState private var isNameFocused: Bool
     @Environment(\.dismiss) private var dismiss
 
     init(expense: Expense) {
@@ -23,13 +30,13 @@ struct EditExpenseView: View {
         _editingCost = State(initialValue: expense.cost)
         _editingName = State(initialValue: expense.name)
         _editingDate = State(initialValue: expense.date)
-        _editingTag = State(initialValue: expense.tag ?? "태그없음")
+        _editingTag = State(initialValue: expense.tag)
     }
 
     var body: some View {
         VStack(spacing: 8) {
             HStack {
-                Text(expense.date.formatted(.dateTime.year().month().day().hour().minute()))
+                Text(Date(timeIntervalSince1970: (Double(editingDate) ?? 0) / 1000).formatted(.dateTime.year().month().day().hour().minute()))
                     .font(.subheadline)
                     .foregroundColor(.gray)
 
@@ -63,6 +70,8 @@ struct EditExpenseView: View {
 
             HStack(spacing: 8) {
                 TextField("설명", text: $editingName)
+                    .focused($isNameFocused)
+                    .submitLabel(.done)
                     .frame(height: 48)
                     .padding(.horizontal, 8)
                     .background(Color(.systemGray6))
@@ -82,9 +91,10 @@ struct EditExpenseView: View {
             }
 
             Button("입력") {
+                isNameFocused = false
                 expense.cost = editingCost
                 expense.name = editingName
-                expense.tag = editingTag == "태그없음" ? nil : editingTag
+                expense.tag = editingTag
                 expense.date = editingDate
                 dismiss()
             }
@@ -92,7 +102,7 @@ struct EditExpenseView: View {
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .padding()
-            .background(Color(hex: "#009B91"))
+            .background(Color.appPrimary(for: appearance))
             .cornerRadius(8)
 
             Spacer()
@@ -102,7 +112,18 @@ struct EditExpenseView: View {
             VStack {
                 DatePicker(
                     "날짜 선택",
-                    selection: $expense.date,
+                    selection: Binding<Date>(
+                        get: {
+                            if let timestamp = Double(editingDate) {
+                                return Date(timeIntervalSince1970: timestamp / 1000)
+                            } else {
+                                return Date()
+                            }
+                        },
+                        set: { newDate in
+                            editingDate = String(Int(newDate.timeIntervalSince1970 * 1000))
+                        }
+                    ),
                     displayedComponents: [.date, .hourAndMinute]
                 )
                 .datePickerStyle(.graphical)
@@ -110,13 +131,12 @@ struct EditExpenseView: View {
 
                 Button("확인") {
                     showDatePicker = false
-                    editingDate = expense.date
                 }
                 .fontWeight(.semibold)
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color(hex: "#009B91"))
+                .background(Color.appPrimary(for: appearance))
                 .cornerRadius(8)
                 .padding()
             }

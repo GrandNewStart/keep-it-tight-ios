@@ -12,10 +12,14 @@ struct TagManager {
 
     static var tags: [String] {
         get {
-            UserDefaults.standard.stringArray(forKey: key) ?? []
+            var result = UserDefaults.standard.stringArray(forKey: key) ?? []
+            result.append("태그없음")
+            return result
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: key)
+            var filteredValue = newValue
+            filteredValue.removeAll(where: {$0 == "태그없음"})
+            UserDefaults.standard.set(filteredValue, forKey: key)
         }
     }
 

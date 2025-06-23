@@ -11,12 +11,13 @@ import SwiftData
 @Model
 final class Expense: Codable {
     var id: String
-    var cost: Int
     var name: String
-    var tag: String?
-    var date: Date
+    var cost: Int
+    var date: String
+    var tag: String
+    
 
-    init(cost: Int, name: String, tag: String?, date: Date) {
+    init(cost: Int, name: String, tag: String, date: String) {
         self.id = UUID().uuidString.lowercased()
         self.cost = cost
         self.name = name
@@ -29,8 +30,8 @@ final class Expense: Codable {
         id = try container.decode(String.self, forKey: .id)
         cost = try container.decode(Int.self, forKey: .cost)
         name = try container.decode(String.self, forKey: .name)
-        tag = try container.decodeIfPresent(String.self, forKey: .tag)
-        date = try container.decode(Date.self, forKey: .date)
+        tag = try container.decode(String.self, forKey: .tag)
+        date = try container.decode(String.self, forKey: .date)
     }
 
     enum CodingKeys: String, CodingKey {

@@ -10,6 +10,13 @@ import SwiftData
 
 @main
 struct LedgerApp: App {
+    
+    @AppStorage("appAppearance") private var appearanceSetting: String = AppAppearance.light.rawValue
+
+    var appearance: AppAppearance {
+        AppAppearance(rawValue: appearanceSetting) ?? .light
+    }
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Expense.self,
@@ -25,7 +32,10 @@ struct LedgerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            HomeView()
+            NavigationStack {
+                HomeView()
+            }
+            .preferredColorScheme(appearance.colorScheme)
         }
         .modelContainer(sharedModelContainer)
     }

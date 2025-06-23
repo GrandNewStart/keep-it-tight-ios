@@ -10,6 +10,12 @@ import SwiftData
 import UniformTypeIdentifiers
 
 struct SettingsView: View {
+    @AppStorage("appAppearance") private var appearanceSetting: String = AppAppearance.light.rawValue
+
+    var appearance: AppAppearance {
+        AppAppearance(rawValue: appearanceSetting) ?? .light
+    }
+
     @Environment(\.modelContext) private var modelContext
     @Query private var expenses: [Expense]
     @State private var exportFile: URL?
@@ -22,9 +28,15 @@ struct SettingsView: View {
     @State private var importMessage: String = ""
     @State private var showImportErrorAlert: Bool = false
     @State private var selectedImportURL: URL?
-
+    @State private var showTag = false
+    
     var body: some View {
         List {
+            Picker("화면 모드", selection: $appearanceSetting) {
+                Text("라이트 모드").tag(AppAppearance.light.rawValue)
+                Text("다크 모드").tag(AppAppearance.dark.rawValue)
+            }
+            .pickerStyle(.inline)
             Button("데이터 내보내기") {
                 let encoder = JSONEncoder()
                 encoder.outputFormatting = .prettyPrinted
@@ -52,7 +64,7 @@ struct SettingsView: View {
             }
 
             Button("태그 관리") {
-                // Tag management
+                showTag = true
             }
 
             Button("초기화", role: .destructive) {
@@ -83,22 +95,26 @@ struct SettingsView: View {
             case .success(let url):
                 selectedImportURL = url
                 do {
-                    let data = try Data(contentsOf: url)
-                    let decoder = JSONDecoder()
-                    decoder.dateDecodingStrategy = .iso8601
-                    let items = try decoder.decode([Expense].self, from: data)
-                    importedExpenses = items
+                    if url.startAccessingSecurityScopedResource() {
+                        defer { url.stopAccessingSecurityScopedResource() }
+                        let data = try Data(contentsOf: url)
+                        let decoder = JSONDecoder()
+                        decoder.dateDecodingStrategy = .iso8601
+                        let items = try decoder.decode([Expense].self, from: data)
+                        importedExpenses = items
 
-                    let currentIDs = Set(expenses.map { $0.id })
-                    let newIDs = Set(items.map { $0.id })
-                    let duplicates = currentIDs.intersection(newIDs)
+                        let currentIDs = Set(expenses.map { $0.id })
+                        let newIDs = Set(items.map { $0.id })
+                        let duplicates = currentIDs.intersection(newIDs)
 
-                    importMessage = "총 \(items.count)개의 항목을 불러왔습니다."
-                    if !duplicates.isEmpty {
-                        importMessage += "\n\(duplicates.count)개의 항목이 기존 데이터와 중복됩니다."
+                        importMessage = "총 \(items.count)개의 항목을 불러왔습니다."
+                        if !duplicates.isEmpty {
+                            importMessage += "\n\(duplicates.count)개의 항목이 기존 데이터와 중복됩니다."
+                        }
+                        showImportOptionsAlert = true
+                    } else {
+                        // PERMISSION ERROR
                     }
-
-                    showImportOptionsAlert = true
                 } catch {
                     showImportErrorAlert = true
                 }
@@ -131,6 +147,9 @@ struct SettingsView: View {
         }
         .navigationTitle("설정")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(isPresented: $showTag) {
+            TagView()
+        }
     }
 }
 
@@ -140,9 +159,9 @@ struct SettingsView: View {
     let container = try! ModelContainer(for: Expense.self, configurations: config)
 
     let context = container.mainContext
-    context.insert(Expense(cost: 12000, name: "커피", tag: "내 카드", date: .now))
-    context.insert(Expense(cost: 55000, name: "식사", tag: "법인 카드", date: .now))
-    context.insert(Expense(cost: 8000, name: "버스", tag: "아빠 카드", date: .now))
+    context.insert(Expense(cost: 12000, name: "커피", tag: "내 카드", date: String(Date.now.timeIntervalSince1970)))
+    context.insert(Expense(cost: 55000, name: "식사", tag: "법인 카드", date: String(Date.now.timeIntervalSince1970)))
+    context.insert(Expense(cost: 8000, name: "버스", tag: "아빠 카드", date: String(Date.now.timeIntervalSince1970)))
 
     return SettingsView()
         .modelContainer(container)

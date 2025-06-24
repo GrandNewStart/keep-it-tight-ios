@@ -25,8 +25,69 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var selectedExpense: Expense?
-    @State private var isEditing: Bool = false
     @State private var showSettings: Bool = false
+    @State private var showInputModal: Bool = false
+
+    @State private var selectedTagFilter: String = "전체"
+    @State private var selectedMonth: Int?
+    @State private var selectedYear: Int?
+
+    var availableYears: [Int] {
+        let years: [Int] = expenses.compactMap { expense in
+            guard let timestamp = Double(expense.date) else { return nil }
+            let year = Calendar.current.dateComponents([.year], from: Date(timeIntervalSince1970: timestamp / 1000)).year
+            return year
+        }
+        return Array(Set(years)).sorted(by: >)
+    }
+
+    var availableMonths: [Int] {
+        guard let selectedYear = selectedYear else { return [] }
+        let months: [Int] = expenses.compactMap { expense in
+            guard let timestamp = Double(expense.date) else { return nil }
+            let date = Date(timeIntervalSince1970: timestamp / 1000)
+            let comps = Calendar.current.dateComponents([.year, .month], from: date)
+            guard comps.year == selectedYear else { return nil }
+            return comps.month
+        }
+        return Array(Set(months)).sorted()
+    }
+
+    var filteredExpenses: [Expense] {
+        expenses.filter { expense in
+            guard let timestamp = Double(expense.date) else { return false }
+            let date = Date(timeIntervalSince1970: timestamp / 1000)
+            let comps = Calendar.current.dateComponents([.year, .month], from: date)
+
+            let tagMatch = selectedTagFilter == "전체" || expense.tag == selectedTagFilter
+            let monthMatch = selectedMonth == nil || comps.month == selectedMonth
+            let yearMatch = selectedYear == nil || comps.year == selectedYear
+            return tagMatch && monthMatch && yearMatch
+        }
+    }
+
+    var totals: (day: Int, week: Int, month: Int, year: Int) {
+        let now = Date()
+        let calendar = Calendar.current
+
+        let grouped = expenses.reduce(into: (0, 0, 0, 0)) { acc, expense in
+            guard let timestamp = Double(expense.date) else { return }
+            let date = Date(timeIntervalSince1970: timestamp / 1000)
+            if calendar.isDate(date, inSameDayAs: now) {
+                acc.0 += expense.cost
+            }
+            if calendar.isDate(date, equalTo: now, toGranularity: .weekOfYear) {
+                acc.1 += expense.cost
+            }
+            if calendar.isDate(date, equalTo: now, toGranularity: .month) {
+                acc.2 += expense.cost
+            }
+            if calendar.isDate(date, equalTo: now, toGranularity: .year) {
+                acc.3 += expense.cost
+            }
+        }
+        return grouped
+    }
 
     var groupedExpenses: [(key: String, value: [Expense])] {
         let dateFormatter = DateFormatter()
@@ -46,19 +107,25 @@ struct HomeView: View {
 
     var body: some View {
         VStack(alignment: .leading) {
-            // Top bar
             HStack {
                 Text("정신차려")
-                    .font(.title)
+                    .font(.headline)
                     .fontWeight(.bold)
 
                 Spacer()
 
                 Button(action: {
+                    showInputModal = true
+                }) {
+                    Image(systemName: "plus")
+                        .imageScale(.large)
+                        .padding(.trailing, 4)
+                }
+
+                Button(action: {
                     showSettings = true
                 }) {
                     Image(systemName: "gearshape.fill")
-                        .tint(Color.appPrimary(for: appearance))
                         .imageScale(.large)
                         .padding(.trailing, 8)
                 }
@@ -67,19 +134,19 @@ struct HomeView: View {
 
             // Header row
             ZStack {
-                Color.appPrimary(for: appearance)
+                Color.blue.opacity(0.3)
                 HStack {
                     Text("금액")
                         .fontWeight(.semibold)
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Text("설명")
                         .fontWeight(.semibold)
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Text("태그")
                         .fontWeight(.semibold)
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(.horizontal)
@@ -91,10 +158,9 @@ struct HomeView: View {
                 ForEach(groupedExpenses, id: \.key) { date, items in
                     Section(header: Text(date).font(.headline)) {
                         ForEach(items) { expense in
-                            Button {
+                            Button(action: {
                                 selectedExpense = expense
-                                isEditing = true
-                            } label: {
+                            }) {
                                 HStack {
                                     Text("\(expense.cost)")
                                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -115,93 +181,100 @@ struct HomeView: View {
 
             Spacer()
 
-            // Input Section
-            HStack(spacing: 8) {
-                TextField("금액", text: $amountText)
-                    .frame(height: 48) // Apply height first
-                    .padding(.horizontal, 8)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(8)
-                    .keyboardType(.numberPad)
-                    .onChange(of: amountText) {
-                        // Allow only digits and max 12 characters
-                        amountText = String(amountText.prefix(12).filter { $0.isNumber })
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    HStack {
+                        Text("오늘의 지출:")
+                        Text("\(-sumBy(.day))")
+                            .foregroundColor(sumBy(.day) > 0 ? .red : .blue)
                     }
+                    Spacer()
+                    Picker("", selection: $selectedTagFilter) {
+                        Text("전체").tag("전체")
+                        ForEach(TagManager.tags, id: \.self) { tag in
+                            Text(tag).tag(tag)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
 
-                Button(action: {
-                    isIncome.toggle()
-                }) {
-                    Text(isIncome ? "+" : "-")
-                        .font(.title)
-                        .frame(width: 48, height: 48)
-                        .background(isIncome ? Color(red: 0.0, green: 0.6, blue: 0.5) : Color(red: 0.85, green: 0.3, blue: 0.3))
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
+//                Text("이번주의 지출: \(sumBy(.week))")
+
+                HStack {
+                    HStack {
+                        Text("이달의 지출:")
+                        Text("\(-sumBy(.month))")
+                            .foregroundColor(sumBy(.month) > 0 ? .red : .blue)
+                    }
+                    Spacer()
+                    Picker("", selection: $selectedMonth) {
+                        ForEach(availableMonths, id: \.self) { month in
+                            Text("\(month)월").tag(Optional(month))
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+
+                HStack {
+                    HStack {
+                        Text("올해의 지출:")
+                        Text("\(-sumBy(.year))")
+                            .foregroundColor(sumBy(.year) > 0 ? .red : .blue)
+                    }
+                    Spacer()
+                    Picker("", selection: $selectedYear) {
+                        ForEach(availableYears, id: \.self) { year in
+                            Text("\(year)년").tag(Optional(year))
+                        }
+                    }
+                    .pickerStyle(.menu)
                 }
             }
-            .padding(.horizontal, 8)
-            HStack(spacing: 8) {
-                TextField("설명", text: $descText)
-                    .focused($isDescFocused)
-                    .submitLabel(.done)
-                    .frame(height: 48)
-                    .padding(.horizontal, 8)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(8)
-                    .onChange(of: descText) {
-                        descText = String(descText.prefix(20))
-                    }
-
-                Picker("태그", selection: $selectedTag) {
-                    ForEach(tags, id: \.self) { tag in
-                        Text(tag).tag(tag as String?)
-                    }
-                }
-                .pickerStyle(MenuPickerStyle())
-                .foregroundColor(.black)
-                .frame(height: 48)
-                .padding(.horizontal, 8)
-                .background(Color(.systemGray6))
-                .cornerRadius(8)
-                
-            }
-            .padding(.horizontal, 8)
-            Button(action: {
-                guard let amount = Int(amountText), !descText.isEmpty else { return }
-                let newExpense = Expense(
-                    cost: isIncome ? -amount : amount,
-                    name: descText,
-                    tag: selectedTag,
-                    date: String(format: "%.0f", Date.now.timeIntervalSince1970 * 1000)
-                )
-                modelContext.insert(newExpense)
-                amountText = ""
-                descText = ""
-                selectedTag = "태그없음"
-                isIncome = false
-                isDescFocused = false
-            }) {
-                Text("입력")
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.appPrimary(for: appearance))
-                    .cornerRadius(8)
-            }
-            .padding(.horizontal, 8)
-            .padding(.bottom)
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.systemGray6))
         }
         .navigationDestination(isPresented: $showSettings) {
             SettingsView()
         }
-        .sheet(isPresented: $isEditing) {
-            if let expense = selectedExpense {
-                EditExpenseView(expense: expense)
-                    .environment(\.modelContext, modelContext)
-                    .presentationDetents([.height(260), .medium])
-                    .presentationDragIndicator(.visible)
-            }
+        .sheet(item: $selectedExpense) { expense in
+            EditExpenseView(expense: expense)
+                .environment(\.modelContext, modelContext)
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showInputModal) {
+            InputView()
+                .environment(\.modelContext, modelContext)
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
+        .onAppear {
+            let now = Date()
+            let comps = Calendar.current.dateComponents([.year, .month], from: now)
+            selectedYear = comps.year
+            selectedMonth = comps.month
+        }
+    }
+
+    func sumBy(_ granularity: Calendar.Component) -> Int {
+        let now = Date()
+        return expenses.reduce(0) { partialResult, expense in
+            guard let timestamp = Double(expense.date) else { return partialResult }
+            let date = Date(timeIntervalSince1970: timestamp / 1000)
+            let comps = Calendar.current.dateComponents([.year, .month], from: date)
+
+            // Always apply tag filter
+            let tagMatch = selectedTagFilter == "전체" || expense.tag == selectedTagFilter
+
+            // Conditionally apply month/year filters depending on granularity
+            let monthMatch = granularity == .month ? selectedMonth == nil || comps.month == selectedMonth : true
+            let yearMatch = granularity == .year ? selectedYear == nil || comps.year == selectedYear : true
+
+            let match = Calendar.current.isDate(date, equalTo: now, toGranularity: granularity)
+                && tagMatch && monthMatch && yearMatch
+
+            return match ? partialResult + expense.cost : partialResult
         }
     }
 }

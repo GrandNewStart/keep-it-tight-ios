@@ -31,17 +31,18 @@ struct HomeView: View {
     @State private var selectedMonth: Int?
     @State private var selectedYear: Int?
 
-    var availableYears: [Int] {
+    var availableYears: [Int?] {
         let years: [Int] = expenses.compactMap { expense in
             guard let timestamp = Double(expense.date) else { return nil }
             let year = Calendar.current.dateComponents([.year], from: Date(timeIntervalSince1970: timestamp / 1000)).year
             return year
         }
-        return Array(Set(years)).sorted(by: >)
+        let unique = Array(Set(years)).sorted(by: >)
+        return unique.isEmpty ? [nil] : unique.map { Optional($0) }
     }
 
-    var availableMonths: [Int] {
-        guard let selectedYear = selectedYear else { return [] }
+    var availableMonths: [Int?] {
+        guard let selectedYear = selectedYear else { return [nil] }
         let months: [Int] = expenses.compactMap { expense in
             guard let timestamp = Double(expense.date) else { return nil }
             let date = Date(timeIntervalSince1970: timestamp / 1000)
@@ -49,7 +50,8 @@ struct HomeView: View {
             guard comps.year == selectedYear else { return nil }
             return comps.month
         }
-        return Array(Set(months)).sorted()
+        let unique = Array(Set(months)).sorted()
+        return unique.isEmpty ? [nil] : unique.map { Optional($0) }
     }
 
     var filteredExpenses: [Expense] {
@@ -152,7 +154,6 @@ struct HomeView: View {
             // Expense list
             List {
                 ForEach(groupedExpenses, id: \.key) { date, items in
-                    
                     Section(header: Text(date).fontWeight(.bold)) {
                         ForEach(items) { expense in
                             Button(action: {
@@ -170,7 +171,6 @@ struct HomeView: View {
                                 .padding(.vertical, 4)
                                 .foregroundColor(.primary)
                             }
-                            .buttonStyle(PlainButtonStyle())
                         }
                     }
                 }
@@ -208,7 +208,11 @@ struct HomeView: View {
                     Spacer()
                     Picker("", selection: $selectedMonth) {
                         ForEach(availableMonths, id: \.self) { month in
-                            Text("\(month)월").tag(Optional(month))
+                            if let month = month {
+                                Text("\(month)월").tag(Optional(month))
+                            } else {
+                                Text("-").tag(Optional<Int>.none)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -225,7 +229,11 @@ struct HomeView: View {
                     Spacer()
                     Picker("", selection: $selectedYear) {
                         ForEach(availableYears, id: \.self) { year in
-                            Text("\(year)년").tag(Optional(year))
+                            if let year = year {
+                                Text("\(String(describing: year))년").tag(Optional(year))
+                            } else {
+                                Text("-").tag(Optional<Int>.none)
+                            }
                         }
                     }
                     .pickerStyle(.menu)

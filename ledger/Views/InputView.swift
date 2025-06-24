@@ -13,7 +13,7 @@ struct InputView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @State private var amountText: String = ""
-    @State private var isIncome: Bool = false
+    @State private var sign = "-"
     @State private var descText: String = ""
     @State private var selectedTag: String = "태그없음"
     @State private var selectedDate: Date = Date()
@@ -36,11 +36,11 @@ struct InputView: View {
                     .cornerRadius(8)
 
                 Button(action: {
-                    isIncome.toggle()
+                    sign = sign == "-" ? "+" : "-"
                 }) {
-                    Text(isIncome ? "+" : "-")
+                    Text(sign)
                         .frame(width: 48, height: 48)
-                        .background(isIncome ? Color.blue : Color.red)
+                        .background(sign == "+" ? Color.blue : Color.red)
                         .foregroundColor(.white)
                         .cornerRadius(8)
                 }
@@ -82,7 +82,7 @@ struct InputView: View {
                 guard let amount = Int(amountText), !descText.isEmpty else { return }
 
                 let newExpense = Expense(
-                    cost: isIncome ? amount : -amount,
+                    cost: sign == "-" ? amount : -amount,
                     name: descText,
                     tag: selectedTag,
                     date: String(format: "%.0f", selectedDate.timeIntervalSince1970 * 1000)
@@ -94,7 +94,7 @@ struct InputView: View {
                 descText = ""
                 selectedTag = "태그없음"
                 selectedDate = Date()
-                isIncome = false
+                sign = "-"
 
                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                 dismiss()

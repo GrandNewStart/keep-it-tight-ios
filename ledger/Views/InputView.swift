@@ -27,9 +27,12 @@ struct InputView: View {
                     .onChange(of: amountText) {
                         amountText = String(amountText.prefix(12))
                     }
-                    .frame(height: 48)
                     .padding(.horizontal, 8)
-                    .background(Color(.systemGray6))
+                    .frame(height: 48)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.gray, lineWidth: 1)
+                    )
                     .cornerRadius(8)
 
                 Button(action: {
@@ -48,21 +51,26 @@ struct InputView: View {
                     .onChange(of: descText) {
                         descText = String(descText.prefix(20))
                     }
-                    .frame(height: 48)
                     .padding(.horizontal, 8)
-                    .background(Color(.systemGray6))
+                    .frame(height: 48)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.gray, lineWidth: 1)
+                    )
                     .cornerRadius(8)
 
                 Picker("", selection: $selectedTag) {
-                    Text("태그없음").tag("태그없음")
                     ForEach(TagManager.tags, id: \.self) { tag in
                         Text(tag).tag(tag)
                     }
                 }
                 .pickerStyle(MenuPickerStyle())
-                .frame(height: 48)
                 .padding(.horizontal, 8)
-                .background(Color(.systemGray6))
+                .frame(height: 48)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.gray, lineWidth: 1)
+                )
                 .cornerRadius(8)
             }
 

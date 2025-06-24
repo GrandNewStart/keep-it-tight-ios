@@ -20,6 +20,8 @@ struct TagView: View {
     @State private var editedTagName: String = ""
     
     @State private var showNewTagAlert = false
+    
+    @State private var newTagError: String? = nil
 
     var body: some View {
         VStack {
@@ -47,6 +49,9 @@ struct TagView: View {
                 }
             }
         }
+        .onAppear {
+            tags = TagManager.tags.filter { $0 != "태그없음" }
+        }
         .navigationTitle("태그관리")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -72,6 +77,18 @@ struct TagView: View {
         .alert("태그 수정", isPresented: $showEditAlert) {
             TextField("수정할 이름", text: $editedTagName)
             Button("저장") {
+                if editedTagName.isEmpty {
+                    newTagError = "태그 이름을 입력해주세요."
+                    return
+                }
+                if editedTagName.contains(newTag) {
+                    newTagError = "이미 존재하는 태그입니다."
+                    return
+                }
+                if editedTagName == "태그없음" {
+                    newTagError = "\"태그없음\"은 사용할 수 없습니다."
+                    return
+                }
                 if let index = tagToEdit {
                     tags[index] = editedTagName
                     TagManager.tags = tags
@@ -86,7 +103,18 @@ struct TagView: View {
         .alert("새 태그 추가", isPresented: $showNewTagAlert) {
             TextField("태그 이름", text: $newTag)
             Button("추가") {
-                guard !newTag.isEmpty else { return }
+                if newTag.isEmpty {
+                    newTagError = "태그 이름을 입력해주세요."
+                    return
+                }
+                if tags.contains(newTag) {
+                    newTagError = "이미 존재하는 태그입니다."
+                    return
+                }
+                if newTag == "태그없음" {
+                    newTagError = "\"태그없음\"은 사용할 수 없습니다."
+                    return
+                }
                 tags.append(newTag)
                 TagManager.tags = tags
                 newTag = ""
@@ -94,6 +122,14 @@ struct TagView: View {
             Button("취소", role: .cancel) {
                 newTag = ""
             }
+        }
+        .alert("오류", isPresented: Binding<Bool>(
+            get: { newTagError != nil },
+            set: { if !$0 { newTagError = nil } }
+        )) {
+            Button("확인", role: .cancel) { newTagError = nil }
+        } message: {
+            Text(newTagError ?? "")
         }
     }
 }

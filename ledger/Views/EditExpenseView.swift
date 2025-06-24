@@ -40,9 +40,12 @@ struct EditExpenseView: View {
             HStack(spacing: 8) {
                 TextField("금액", value: $editingCost, formatter: NumberFormatter())
                     .keyboardType(.numberPad)
-                    .frame(height: 48)
                     .padding(.horizontal, 8)
-                    .background(Color(.systemGray6))
+                    .frame(height: 48)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.gray, lineWidth: 1)
+                    )
                     .cornerRadius(8)
 
                 Button(action: {
@@ -61,21 +64,26 @@ struct EditExpenseView: View {
                 TextField("설명", text: $editingName)
                     .focused($isNameFocused)
                     .submitLabel(.done)
-                    .frame(height: 48)
                     .padding(.horizontal, 8)
-                    .background(Color(.systemGray6))
+                    .frame(height: 48)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.gray, lineWidth: 1)
+                    )
                     .cornerRadius(8)
 
                 Picker("태그", selection: $editingTag) {
-                    Text("태그없음").tag("태그없음")
                     ForEach(tags, id: \.self) { tag in
                         Text(tag).tag(tag)
                     }
                 }
                 .pickerStyle(MenuPickerStyle())
-                .frame(height: 48)
                 .padding(.horizontal, 8)
-                .background(Color(.systemGray6))
+                .frame(height: 48)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.gray, lineWidth: 1)
+                )
                 .cornerRadius(8)
             }
             
@@ -88,35 +96,37 @@ struct EditExpenseView: View {
             .background(Color(.systemGray6))
             .cornerRadius(8)
 
-            Button("수정") {
-                isNameFocused = false
-                if editingSign == "+" {
-                    expense.cost = -editingCost
-                } else {
-                    expense.cost = editingCost
+            HStack {
+                Button("삭제") {
+                    modelContext.delete(expense)
+                    dismiss()
                 }
-                expense.name = editingName
-                expense.tag = editingTag
-                expense.date = String(format: "%.0f", editingDate.timeIntervalSince1970 * 1000)
-                dismiss()
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.red)
+                .cornerRadius(8)
+                
+                Button("수정") {
+                    isNameFocused = false
+                    if editingSign == "+" {
+                        expense.cost = -editingCost
+                    } else {
+                        expense.cost = editingCost
+                    }
+                    expense.name = editingName
+                    expense.tag = editingTag
+                    expense.date = String(format: "%.0f", editingDate.timeIntervalSince1970 * 1000)
+                    dismiss()
+                }
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.blue)
+                .cornerRadius(8)
             }
-            .fontWeight(.semibold)
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(Color.blue)
-            .cornerRadius(8)
-
-            Button("삭제") {
-                modelContext.delete(expense)
-                dismiss()
-            }
-            .fontWeight(.semibold)
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(Color.red)
-            .cornerRadius(8)
 
             Spacer()
         }

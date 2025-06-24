@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct HomeView: View {
+    @Environment(\.modelContext) private var modelContext
     @AppStorage("appAppearance") private var appearanceSetting: String = AppAppearance.light.rawValue
     @FocusState private var isDescFocused: Bool
 
@@ -17,17 +18,15 @@ struct HomeView: View {
     }
     
     @Query(sort: \Expense.date, order: .reverse) var expenses: [Expense]
+    
     @State private var amountText: String = ""
     @State private var isIncome: Bool = false
     @State private var descText: String = ""
     @State private var tags = TagManager.tags
     @State private var selectedTag: String = "태그없음"
-    @Environment(\.modelContext) private var modelContext
-
     @State private var selectedExpense: Expense?
     @State private var showSettings: Bool = false
     @State private var showInputModal: Bool = false
-
     @State private var selectedTagFilter: String = "전체"
     @State private var selectedMonth: Int?
     @State private var selectedYear: Int?
@@ -66,24 +65,21 @@ struct HomeView: View {
         }
     }
 
-    var totals: (day: Int, week: Int, month: Int, year: Int) {
+    var totals: (day: Int, month: Int, year: Int) {
         let now = Date()
         let calendar = Calendar.current
 
-        let grouped = expenses.reduce(into: (0, 0, 0, 0)) { acc, expense in
+        let grouped = expenses.reduce(into: (0, 0, 0)) { acc, expense in
             guard let timestamp = Double(expense.date) else { return }
             let date = Date(timeIntervalSince1970: timestamp / 1000)
             if calendar.isDate(date, inSameDayAs: now) {
                 acc.0 += expense.cost
             }
-            if calendar.isDate(date, equalTo: now, toGranularity: .weekOfYear) {
+            if calendar.isDate(date, equalTo: now, toGranularity: .month) {
                 acc.1 += expense.cost
             }
-            if calendar.isDate(date, equalTo: now, toGranularity: .month) {
-                acc.2 += expense.cost
-            }
             if calendar.isDate(date, equalTo: now, toGranularity: .year) {
-                acc.3 += expense.cost
+                acc.2 += expense.cost
             }
         }
         return grouped
@@ -137,15 +133,15 @@ struct HomeView: View {
                 Color.blue.opacity(0.3)
                 HStack {
                     Text("금액")
-                        .fontWeight(.semibold)
+                        .fontWeight(.bold)
                         .foregroundColor(.primary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Text("설명")
-                        .fontWeight(.semibold)
+                        .fontWeight(.bold)
                         .foregroundColor(.primary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Text("태그")
-                        .fontWeight(.semibold)
+                        .fontWeight(.bold)
                         .foregroundColor(.primary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -156,13 +152,15 @@ struct HomeView: View {
             // Expense list
             List {
                 ForEach(groupedExpenses, id: \.key) { date, items in
-                    Section(header: Text(date).font(.headline)) {
+                    
+                    Section(header: Text(date).fontWeight(.bold)) {
                         ForEach(items) { expense in
                             Button(action: {
                                 selectedExpense = expense
                             }) {
                                 HStack {
-                                    Text("\(expense.cost)")
+                                    Text("\(abs(expense.cost))")
+                                        .foregroundStyle(expense.cost < 0 ? Color.blue : Color.red)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                     Text(expense.name)
                                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -184,7 +182,8 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     HStack {
-                        Text("오늘의 지출:")
+                        Text("오늘의 지출  ")
+                            .fontWeight(.bold)
                         Text("\(-sumBy(.day))")
                             .foregroundColor(sumBy(.day) > 0 ? .red : .blue)
                     }
@@ -196,13 +195,13 @@ struct HomeView: View {
                         }
                     }
                     .pickerStyle(.menu)
+                    .frame(height: 48)
                 }
-
-//                Text("이번주의 지출: \(sumBy(.week))")
 
                 HStack {
                     HStack {
-                        Text("이달의 지출:")
+                        Text("이달의 지출  ")
+                            .fontWeight(.bold)
                         Text("\(-sumBy(.month))")
                             .foregroundColor(sumBy(.month) > 0 ? .red : .blue)
                     }
@@ -213,11 +212,13 @@ struct HomeView: View {
                         }
                     }
                     .pickerStyle(.menu)
+                    .frame(height: 48)
                 }
 
                 HStack {
                     HStack {
-                        Text("올해의 지출:")
+                        Text("올해의 지출  ")
+                            .fontWeight(.bold)
                         Text("\(-sumBy(.year))")
                             .foregroundColor(sumBy(.year) > 0 ? .red : .blue)
                     }
@@ -228,6 +229,7 @@ struct HomeView: View {
                         }
                     }
                     .pickerStyle(.menu)
+                    .frame(height: 48)
                 }
             }
             .padding()
@@ -258,7 +260,20 @@ struct HomeView: View {
     }
 
     func sumBy(_ granularity: Calendar.Component) -> Int {
-        let now = Date()
+        let targetDate: Date
+        let calendar = Calendar.current
+        switch granularity {
+        case .day:
+            targetDate = Date()
+        case .month:
+            guard let selectedYear, let selectedMonth else { return 0 }
+            targetDate = calendar.date(from: DateComponents(year: selectedYear, month: selectedMonth)) ?? Date()
+        case .year:
+            guard let selectedYear else { return 0 }
+            targetDate = calendar.date(from: DateComponents(year: selectedYear)) ?? Date()
+        default:
+            return 0
+        }
         return expenses.reduce(0) { partialResult, expense in
             guard let timestamp = Double(expense.date) else { return partialResult }
             let date = Date(timeIntervalSince1970: timestamp / 1000)
@@ -271,7 +286,7 @@ struct HomeView: View {
             let monthMatch = granularity == .month ? selectedMonth == nil || comps.month == selectedMonth : true
             let yearMatch = granularity == .year ? selectedYear == nil || comps.year == selectedYear : true
 
-            let match = Calendar.current.isDate(date, equalTo: now, toGranularity: granularity)
+            let match = Calendar.current.isDate(date, equalTo: targetDate, toGranularity: granularity)
                 && tagMatch && monthMatch && yearMatch
 
             return match ? partialResult + expense.cost : partialResult
@@ -288,6 +303,13 @@ struct HomeView: View {
     context.insert(Expense(cost: 12000, name: "커피", tag: "내 카드", date: String(Date.now.timeIntervalSince1970)))
     context.insert(Expense(cost: 55000, name: "식사", tag: "법인 카드", date: String(Date.now.timeIntervalSince1970)))
     context.insert(Expense(cost: 8000, name: "버스", tag: "아빠 카드", date: String(Date.now.timeIntervalSince1970)))
+    context.insert(Expense(cost: 11000, name: "커피", tag: "내 카드", date: String(Date.now.timeIntervalSince1970)))
+    context.insert(Expense(cost: 10000, name: "식사", tag: "법인 카드", date: String(Date.now.timeIntervalSince1970)))
+    context.insert(Expense(cost: 2000, name: "버스", tag: "아빠 카드", date: String(Date.now.timeIntervalSince1970)))
+    
+    TagManager.add("내 카드")
+    TagManager.add("법인 카드")
+    TagManager.add("아빠 카드")
 
     return HomeView()
         .modelContainer(container)

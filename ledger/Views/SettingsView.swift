@@ -11,6 +11,7 @@ import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @AppStorage("appAppearance") private var appearanceSetting: String = AppAppearance.light.rawValue
+    @State private var showPrivacyPolicy = false
 
     var appearance: AppAppearance {
         AppAppearance(rawValue: appearanceSetting) ?? .light
@@ -29,6 +30,7 @@ struct SettingsView: View {
     @State private var showImportErrorAlert: Bool = false
     @State private var selectedImportURL: URL?
     @State private var showTag = false
+    @State private var showResetConfirmation = false
     
     var body: some View {
         List {
@@ -37,41 +39,53 @@ struct SettingsView: View {
                 Text("다크 모드").tag(AppAppearance.dark.rawValue)
             }
             .pickerStyle(.inline)
-            Button("데이터 내보내기") {
-                let encoder = JSONEncoder()
-                encoder.outputFormatting = .prettyPrinted
-                encoder.dateEncodingStrategy = .iso8601
+            
+            Section(header: Text("데이터 관리")) {
+                Button("데이터 내보내기") {
+                    let encoder = JSONEncoder()
+                    encoder.outputFormatting = .prettyPrinted
+                    encoder.dateEncodingStrategy = .iso8601
 
-                do {
-                    let data = try encoder.encode(expenses)
-                    let formatter = DateFormatter()
-                    formatter.dateFormat = "yyMMdd-HHmmss"
-                    let timestamp = formatter.string(from: Date())
-                    let tempDir = FileManager.default.temporaryDirectory
-                    let fileName = "정신차려\(timestamp).json"
-                    let fileURL = tempDir.appendingPathComponent(fileName)
-                    try data.write(to: fileURL)
-                    exportDocument = FileDocumentWrapper(url: fileURL)
-                    exportFile = fileURL
-                    showExporter = true
-                } catch {
-                    print("Failed to encode or write JSON: \(error)")
+                    do {
+                        let data = try encoder.encode(expenses)
+                        let formatter = DateFormatter()
+                        formatter.dateFormat = "yyMMdd-HHmmss"
+                        let timestamp = formatter.string(from: Date())
+                        let tempDir = FileManager.default.temporaryDirectory
+                        let fileName = "정신차려\(timestamp).json"
+                        let fileURL = tempDir.appendingPathComponent(fileName)
+                        try data.write(to: fileURL)
+                        exportDocument = FileDocumentWrapper(url: fileURL)
+                        exportFile = fileURL
+                        showExporter = true
+                    } catch {
+                        print("Failed to encode or write JSON: \(error)")
+                    }
+                }
+
+                Button("데이터 읽어오기") {
+                    showImporter = true
+                }
+
+                Button("태그 관리") {
+                    showTag = true
+                }
+
+                Button("초기화", role: .destructive) {
+                    showResetConfirmation = true
                 }
             }
-
-            Button("데이터 읽어오기") {
-                showImporter = true
-            }
-
-            Button("태그 관리") {
-                showTag = true
-            }
-
-            Button("초기화", role: .destructive) {
-                for expense in expenses {
-                    modelContext.delete(expense)
+            
+            Section(header: Text("앱 정보")) {
+                Button("개인정보 처리방침") {
+                    showPrivacyPolicy = true
                 }
-                TagManager.clear()
+
+                if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
+                   let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+                    Text("v\(version) (\(build))")
+                        .foregroundStyle(Color.gray)
+                }
             }
         }
         .fileExporter(
@@ -145,6 +159,20 @@ struct SettingsView: View {
         } message: {
             Text(importMessage)
         }
+        .alert("모든 데이터를 삭제하시겠습니까?", isPresented: $showResetConfirmation) {
+            Button("삭제", role: .destructive) {
+                for expense in expenses {
+                    modelContext.delete(expense)
+                }
+                TagManager.clear()
+            }
+            Button("취소", role: .cancel) { }
+        } message: {
+            Text("이 작업은 되돌릴 수 없습니다.")
+        }
+        .sheet(isPresented: $showPrivacyPolicy) {
+            SafariView(url: URL(string: "http://www.bluelemonade.co.kr/keep-it-tight/privacy-policy.html")!)
+        }
         .navigationTitle("설정")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $showTag) {
@@ -165,6 +193,18 @@ struct SettingsView: View {
 
     return SettingsView()
         .modelContainer(container)
+}
+
+import SafariServices
+
+struct SafariView: UIViewControllerRepresentable {
+    let url: URL
+
+    func makeUIViewController(context: Context) -> SFSafariViewController {
+        return SFSafariViewController(url: url)
+    }
+
+    func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
 }
 
 struct FileDocumentWrapper: FileDocument {

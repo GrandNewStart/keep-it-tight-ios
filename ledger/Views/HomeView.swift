@@ -91,7 +91,7 @@ struct HomeView: View {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy.MM.dd"
 
-        let groups = Dictionary(grouping: expenses) { expense -> String in
+        let groups = Dictionary(grouping: filteredExpenses) { expense -> String in
             if let timeInterval = Double(expense.date) {
                 let date = Date(timeIntervalSince1970: timeInterval / 1000)
                 return dateFormatter.string(from: date)
